@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %} - Branded Perfumes{% endblock title %}
+{% block body %}
+{% load static %}
+
+
+<div class="container mt-5">
+    <div class="row align-items-center">
+        <div class="col-lg-6 mb-4 mb-lg-0 text-center">
+            <img src="{{ product.image.url }}" alt="{{ product.title }}" class="img-fluid">
+        </div>
+        <div class="col-lg-6">
+            <h2 class="text-center">{{ product.title }}</h2>
+            <p class="lead text-center  ">Price: Rs. {{ product.price }}</p>
+            <form class="d-flex justify-content-center align-items-center"  id="add-to-cart-form" data-product-id="{{ product.id }}">
+                {% csrf_token %}
+                <button type="button" id="add-to-cart-btn" class="btn btn-info " style="width: 100%;">Add to Cart</button>
+            </form>
+            <p>{{ product.content|safe }}</p>
+        </div>
+    </div>
+</div>
+
+
+{% endblock body %}

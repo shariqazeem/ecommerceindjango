@@ -1,0 +1,37 @@
+.cursor-pointer {
+    cursor: default;
+    transition: transform 0.3s ease;
+}
+
+.cursor-pointer:hover {
+    cursor: pointer;
+    transform: scale(1.1); /* Increase scale on hover */
+}
+
+.image-hover {
+  cursor: default;
+  transition: transform 0.3s ease;
+}
+.image-hover:hover {
+      cursor: pointer;
+      transform: scale(1.1);
+}
+
+/* Custom styles for carousel */
+.carousel-item {
+    position: relative;
+  }
+  .carousel-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff; /* Text color */
+  }
+  .carousel-content h1 {
+    font-size: 3rem; /* Adjust heading size */
+  }
+
+  
+  
