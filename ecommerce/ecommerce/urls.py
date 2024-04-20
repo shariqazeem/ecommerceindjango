@@ -25,7 +25,12 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('collections/all', views.shopall, name='shopall'),
     path('product/<int:product_id>/', views.product_details, name='product_details'),
+    path('cart/', views.cart, name='cart'),
+    path('add_to_cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
+    path('update_cart_item/<int:product_id>/', views.update_cart_item, name='update_cart_item'),
+    path('remove_from_cart/<int:product_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('checkout/', views.checkout, name='checkout'),
 
-    path('cart/', views.view_cart, name='cart'),
+
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

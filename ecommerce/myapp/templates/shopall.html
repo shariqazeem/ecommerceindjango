@@ -23,23 +23,32 @@
     <div class="row">
         {% for product in products %}
         <div class="col-lg-4 col-md-6 mb-4">
-            <a href="{% url 'product_details' product.id %}" class="text-decoration-none">
-                <div class="card m-auto shadow-lg text-center" style="width: 21rem; height:33rem; border-radius: 32px;">
-                    <!-- Use product.image.url to get the full URL of the image -->
+            <div class="card m-auto shadow-lg text-center" style="width: 21rem; height:33rem; border-radius: 32px;">
+                <!-- Use product.image.url to get the full URL of the image -->
+                <!-- Make the whole card clickable to open the product details page -->
+                <a href="{% url 'product_details' product.id %}" class="text-decoration-none">
                     <div class="card-body d-flex justify-content-center align-items-center">
                         <img style="width: 15rem; height: 21rem;" src="{{ product.image.url }}" class="card-img-top image-hover" alt="...">
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">{{ product.title }}</h5>
                         <p class="card-text">Rs. {{ product.price }} PKR</p>
-                        {% if product.quantity > 0 %}
-                            <button class="btn btn-primary">Add to Cart</button>
-                        {% else %}
-                            <button class="btn btn-secondary" style="cursor: not-allowed;" disabled>Sold Out</button>
-                        {% endif %}
                     </div>
+                </a>
+                <div class="card-footer">
+                    {% if product.sold_out %}
+                        <button class="btn btn-secondary" style="cursor: not-allowed;" disabled>Sold Out</button>
+                    {% else %}
+                        <!-- Add a data-product-id attribute to identify the product -->
+                        <!-- Modify the "Add to Cart" button to submit a form -->
+                        <form action="{% url 'add_to_cart' product.id %}" method="post" class="add-to-cart-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary">Add to Cart</button>
+                        </form>
+                    {% endif %}
                 </div>
-            </a>
+                
+            </div>
         </div>
         {% endfor %}
     </div> <!-- /.row -->

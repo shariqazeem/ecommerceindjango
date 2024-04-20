@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Cart - Branded Perfumes{% endblock title %}
+{% block body %}
+<div class="container mt-4">
+    <h1 class="fw-medium">Your Cart</h1>
+    {% if cart_items %}
+    <div class="list-group mt-4 list-group-flush">
+        <!-- Cart items will be dynamically added here -->
+        {% for item in cart_items %}
+        <div class="list-group-item">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <img src="{{ item.image.url }}" alt="{{ item.title }}" style="width: 80px;" class="me-3">
+                    <div>
+                        <h5 class="mb-0">{{ item.title }}</h5>
+                        <p class="mb-0">Total: Rs. <span class="item-price">{{ item.price }}</span> PKR</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="mx-3">
+                        <label for="quantity{{ item.id }}">Quantity:</label>
+                        <input type="number" id="quantity{{ item.id }}" name="quantity" value="1" min="1" class="form-control form-control-sm quantity-input" data-item-price="{{ item.price }}">
+                    </div>
+                    <div>
+                        <a href="{% url 'remove_from_cart' item.id %}" class="btn btn-danger btn-sm">Remove</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center mt-4">
+        <h3>Your cart is empty</h3>
+        <a href="{% url 'shopall' %}" class="btn btn-primary mt-3">Continue Shopping</a>
+    </div>
+    {% endif %}
+</div>
+
+{% if cart_items %}
+<hr class="container">
+<div class="row">
+    <!-- Order special instructions form -->
+    <div class="col-md-6">
+        <div class="mt-4 p-4 bg-light rounded">
+            <h4 class="mb-4 ">Special Instructions</h4>
+            <form action="{% url 'checkout' %}" method="post">
+                {% csrf_token %}
+                <textarea name="special_instructions" class="form-control mb-3" rows="3" placeholder="Enter any special instructions for your order"></textarea>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Proceed to Checkout</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order summary -->
+    <div class="col-md-6">
+        <div class="mt-4 p-4 bg-light rounded">
+            <h4 class="mb-4">Order Summary</h4>
+            <ul class="list-group">
+                <li id="estimated-total-li" class="list-group-item d-flex justify-content-between align-items-center">Estimated Total: Rs. <span id="estimated-total">0.00</span> PKR</li>
+                <!-- Add more list items for taxes, discounts, shipping, etc. -->
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all quantity inputs
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+
+        // Calculate initial total amount based on default quantity values
+        calculateInitialTotal();
+
+        // Add event listener to each quantity input
+        quantityInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                const price = parseFloat(this.dataset.itemPrice);
+                const quantity = parseInt(this.value);
+                const total = price * quantity;
+                const parentDiv = this.closest('.list-group-item');
+                const priceElement = parentDiv.querySelector('.item-price');
+                priceElement.textContent = total.toFixed(2);
+                updateEstimatedTotal();
+            });
+        });
+
+        // Function to update the estimated total
+        function updateEstimatedTotal() {
+            const itemPrices = document.querySelectorAll('.item-price');
+            let total = 0;
+            itemPrices.forEach(itemPrice => {
+                total += parseFloat(itemPrice.textContent);
+            });
+            document.getElementById('estimated-total').textContent = total.toFixed(2);
+        }
+
+        // Function to calculate initial total amount based on default quantity values
+        function calculateInitialTotal() {
+            const itemPrices = document.querySelectorAll('.item-price');
+            let total = 0;
+            itemPrices.forEach(itemPrice => {
+                const parentDiv = itemPrice.closest('.list-group-item');
+                const quantityInput = parentDiv.querySelector('.quantity-input');
+                const price = parseFloat(itemPrice.textContent);
+                const quantity = parseInt(quantityInput.value);
+                total += price * quantity;
+            });
+            document.getElementById('estimated-total').textContent = total.toFixed(2);
+        }
+
+        // Trigger change event on each quantity input to calculate initial total
+        quantityInputs.forEach(input => {
+            input.dispatchEvent(new Event('change'));
+        });
+    });
+</script>
+
+{% endblock body %}
