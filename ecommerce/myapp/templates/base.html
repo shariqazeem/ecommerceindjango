@@ -73,16 +73,15 @@
     
         
 
-<a href="{% url 'cart' %}">
-  <div class="cursor-pointer" data-bs-toggle="modal" data-bs-target="#cartModal">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart" viewBox="0 0 16 16">
-        <path d="M0 0h1v1H0V0zm15 0h1v1h-1V0zM3.906 1H12.75l.574 2H2.332l.574-2zm-1.17 3.055-1.517 6.396a.25.25 0 0 0 .246.299h9.255a.25.25 0 0 0 .246-.299L12.297 4H4.387zM1.574 10l-.348 1.466h12.548L14.426 10H1.574zM2.426 12l-.348 1.466h12.548L14.426 12H2.426z"/>
-    </svg>
-    <span id="cart-count" class="badge bg-secondary">{{ request.session.cart_count }}</span>
-</div>
-</a>
-
-  
+    <a href="{% url 'cart' %}">
+      <div class="cursor-pointer" data-bs-toggle="modal" data-bs-target="#cartModal">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cart" viewBox="0 0 16 16">
+            <path d="M0 0h1v1H0V0zm15 0h1v1h-1V0zM3.906 1H12.75l.574 2H2.332l.574-2zm-1.17 3.055-1.517 6.396a.25.25 0 0 0 .246.299h9.255a.25.25 0 0 0 .246-.299L12.297 4H4.387zM1.574 10l-.348 1.466h12.548L14.426 10H1.574zM2.426 12l-.348 1.466h12.548L14.426 12H2.426z"/>
+        </svg>
+        <span id="cart-count" class="badge bg-secondary">{{ cart_count }}</span>
+      </div>
+    </a>
+    
   </nav>
 
 
