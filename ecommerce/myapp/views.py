@@ -1,9 +1,9 @@
-from django.shortcuts import render,redirect,get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product
 from django.http import JsonResponse
 
-
 # Create your views here.
+
 def index(request):
     featured_products = Product.objects.filter(featured=True)
     main_products = Product.objects.filter(main_product=True)
@@ -11,7 +11,6 @@ def index(request):
     context = {
         'featured_products': featured_products,
         'main_products': main_products
-
     }
     return render(request, 'index.html', context)
 
@@ -23,7 +22,7 @@ def shopall(request):
     return render(request, 'shopall.html', context)
 
 def product_details(request, product_id):
-    product = Product.objects.get(id=product_id)
+    product = get_object_or_404(Product, id=product_id)
     context = {
         'product': product
     }
@@ -32,13 +31,10 @@ def product_details(request, product_id):
 def cart(request):
     cart_product_ids = request.session.get('cart', [])
     products_in_cart = Product.objects.filter(id__in=cart_product_ids)
-
     cart_items = {product: cart_product_ids.count(product.id) for product in products_in_cart}
     cart_count = sum(cart_items.values())
     context = {'cart_items': cart_items, 'cart_count': cart_count}
     return render(request, 'cart.html', context)
-
-
 
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -53,9 +49,6 @@ def add_to_cart(request, product_id):
     request.session['cart'] = cart
     
     return redirect('shopall')
-
-
-# views.py
 
 def update_cart_item(request, product_id):
     if request.method == 'POST':
