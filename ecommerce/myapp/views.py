@@ -32,7 +32,10 @@ def product_details(request, product_id):
 def cart(request):
     cart_product_ids = request.session.get('cart', [])
     products_in_cart = Product.objects.filter(id__in=cart_product_ids)
-    context = {'cart_items': products_in_cart}
+
+    cart_items = {product: cart_product_ids.count(product.id) for product in products_in_cart}
+    cart_count = sum(cart_items.values())
+    context = {'cart_items': cart_items, 'cart_count': cart_count}
     return render(request, 'cart.html', context)
 
 
@@ -43,16 +46,11 @@ def add_to_cart(request, product_id):
     # Get the cart from the session or initialize it as an empty list
     cart = request.session.get('cart', [])
     
-    # Check if the product is already in the cart
-    if product.id not in cart:
-        # Add the product ID to the cart
-        cart.append(product.id)
-        
-        # Update the session with the new cart data
-        request.session['cart'] = cart
-        
-        # Update cart count in session
-        request.session['cart_count'] = len(cart)
+    cart = request.session.get('cart', [])
+
+    cart.append(product_id)
+
+    request.session['cart'] = cart
     
     return redirect('shopall')
 
@@ -65,23 +63,45 @@ def update_cart_item(request, product_id):
         if quantity <= 0:
             remove_from_cart(request, product_id)
         else:
-            cart_items = request.session.get('cart', {})
+            cart_items = request.session.get('cart', [])
             if product_id in cart_items:
-                cart_items[product_id] = quantity
+                while product_id in cart_items:
+                    cart_items.remove(product_id)
+                cart_items.extend([product_id] * quantity)
                 request.session['cart'] = cart_items
     return redirect('cart')
 
 def remove_from_cart(request, product_id):
     cart_items = request.session.get('cart', [])
     if product_id in cart_items:
-        cart_items.remove(product_id)
+        while product_id in cart_items:
+            cart_items.remove(product_id)
         request.session['cart'] = cart_items
-        
-        # Update cart count in session
-        request.session['cart_count'] = len(cart_items)
-        
     return redirect('cart')
+
+def get_cart_items(request):
+    cart_items = request.session.get('cart', [])
+    cart_item_count = {product_id: cart_items.count(product_id) for product_id in set(cart_items)}
+    cart_products = Product.objects.filter(id__in=cart_item_count.keys())
+    cart_items = {product: cart_item_count[product.id] for product in cart_products}
+    return cart_items
 
 
 def checkout(request):
-    return render(request, 'checkout.html')
+    if request.method == 'POST':
+        cart_items = get_cart_items(request)
+        for product in cart_items:
+            quantity = int(request.POST.get(f'quantity_{product.id}', 1))
+            cart_items[product] = quantity
+        request.session['cart'] = [product.id for product, quantity in cart_items.items() for _ in range(quantity)]
+
+    cart_items = get_cart_items(request)
+    subtotal = sum(product.price * quantity for product, quantity in cart_items.items())
+    shipping_charge = 200
+    total = subtotal + shipping_charge
+
+    cart_count = sum(cart_items.values())
+    return render(request, 'checkout.html', {'cart_items': cart_items, 'subtotal': subtotal, 'shipping_charge': shipping_charge, 'total': total, 'cart_count': cart_count})
+
+def complete_order(request):
+    return render(request, 'complete_order.html')
