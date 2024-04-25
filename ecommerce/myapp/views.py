@@ -3,9 +3,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, Order
 from django.http import JsonResponse
 from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
-
+@csrf_exempt
 def index(request):
     featured_products = Product.objects.filter(featured=True)
     main_products = Product.objects.filter(main_product=True)
@@ -16,6 +17,7 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
+@csrf_exempt
 def shopall(request):
     products = Product.objects.all()
     context = {
@@ -23,6 +25,7 @@ def shopall(request):
     }
     return render(request, 'shopall.html', context)
 
+@csrf_exempt
 def product_details(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     context = {
@@ -30,6 +33,7 @@ def product_details(request, product_id):
     }
     return render(request, 'product_details.html', context)
 
+@csrf_exempt
 def cart(request):
     cart_product_ids = request.session.get('cart', [])
     products_in_cart = Product.objects.filter(id__in=cart_product_ids)
@@ -38,6 +42,7 @@ def cart(request):
     context = {'cart_items': cart_items, 'cart_count': cart_count}
     return render(request, 'cart.html', context)
 
+@csrf_exempt
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart = request.session.get('cart', [])
@@ -45,6 +50,7 @@ def add_to_cart(request, product_id):
     request.session['cart'] = cart
     return redirect('shopall')
 
+@csrf_exempt
 def update_cart_item(request, product_id):
     if request.method == 'POST':
         quantity = int(request.POST.get('quantity', 1))
@@ -59,6 +65,7 @@ def update_cart_item(request, product_id):
                 request.session['cart'] = cart_items
     return redirect('cart')
 
+@csrf_exempt
 def remove_from_cart(request, product_id):
     cart_items = request.session.get('cart', [])
     if product_id in cart_items:
@@ -67,6 +74,7 @@ def remove_from_cart(request, product_id):
         request.session['cart'] = cart_items
     return redirect('cart')
 
+@csrf_exempt
 def get_cart_items(request):
     cart_items = request.session.get('cart', [])
     cart_item_count = {product_id: cart_items.count(product_id) for product_id in set(cart_items)}
@@ -75,6 +83,7 @@ def get_cart_items(request):
     return cart_items
 
 
+@csrf_exempt
 def checkout(request):
     if request.method == 'POST':
         cart_items = get_cart_items(request)
@@ -98,6 +107,7 @@ def checkout(request):
     cart_count = sum(cart_items.values())
     return render(request, 'checkout.html', {'cart_items': cart_items, 'subtotal': subtotal, 'shipping_charge': shipping_charge, 'total': total, 'cart_count': cart_count})
 
+@csrf_exempt
 def complete_order(request):
     if request.method == 'POST':
         # Process the order here
