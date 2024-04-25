@@ -2,7 +2,7 @@
 FROM python:3.10
 
 # Set environment variables
-ENV DJANGO_SETTINGS_MODULE=myproject.settings
+ENV DJANGO_SETTINGS_MODULE=ecommerce.settings
 ENV DJANGO_DEBUG=False
 
 # Set the working directory in the container
@@ -20,4 +20,4 @@ RUN pip install gunicorn
 EXPOSE 8000
 
 # Run the Django app
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "myproject.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "ecommerce.wsgi:application"]
