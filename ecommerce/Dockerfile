@@ -16,10 +16,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN pip install gunicorn
 
-RUN python manage.py makemigrations
-
-RUN python manage.py migrate
-
 # Expose the port the app runs on
 EXPOSE 8000
 
