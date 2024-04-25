@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Order, OrderItem
+from .models import Product, Order
 from django.http import JsonResponse
+from django.contrib.auth.models import User
 
 # Create your views here.
 
@@ -82,6 +83,13 @@ def checkout(request):
             cart_items[product] = quantity
         request.session['cart'] = [product.id for product, quantity in cart_items.items() for _ in range(quantity)]
 
+        subtotal = sum(product.price * quantity for product, quantity in cart_items.items())
+        shipping_charge = 200
+        total = subtotal + shipping_charge
+
+        cart_count = sum(cart_items.values())
+        return render(request, 'checkout.html', {'cart_items': cart_items, 'subtotal': subtotal, 'shipping_charge': shipping_charge, 'total': total, 'cart_count': cart_count})
+
     cart_items = get_cart_items(request)
     subtotal = sum(product.price * quantity for product, quantity in cart_items.items())
     shipping_charge = 200
@@ -89,8 +97,6 @@ def checkout(request):
 
     cart_count = sum(cart_items.values())
     return render(request, 'checkout.html', {'cart_items': cart_items, 'subtotal': subtotal, 'shipping_charge': shipping_charge, 'total': total, 'cart_count': cart_count})
-
-from django.contrib.auth.models import User
 
 def complete_order(request):
     if request.method == 'POST':
@@ -105,16 +111,21 @@ def complete_order(request):
         phone_number = request.POST.get('phone_number')
         payment_method = request.POST.get('payment_method')
         
+        # Calculate the total bill
+        cart_items = get_cart_items(request)
+        subtotal = sum(product.price * quantity for product, quantity in cart_items.items())
+        shipping_charge = 200
+        total_bill = subtotal + shipping_charge
+        
         # Create a temporary user
         user, _ = User.objects.get_or_create(username='guest')
         
         # Create a new order
-        order = Order.objects.create(user=user, full_name=full_name, email=email, country=country, address=address, city=city, postal_code=postal_code, phone_number=phone_number, payment_method=payment_method)
+        order = Order.objects.create(user=user, full_name=full_name, email=email, country=country, address=address, city=city, postal_code=postal_code, phone_number=phone_number, payment_method=payment_method, total_bill=total_bill)
         
         # Add items to the order
-        cart_items = get_cart_items(request)
         for product, quantity in cart_items.items():
-            OrderItem.objects.create(order=order, product=product, quantity=quantity)
+            order.order_items.create(product=product, quantity=quantity)
         
         # Clear the cart after completing the order
         del request.session['cart']
@@ -126,7 +137,7 @@ def complete_order(request):
         print("Shipping Address:", address)
         print("Payment Method:", payment_method)
         print("Ordered Items:")
-        for item in OrderItem.objects.filter(order=order):
+        for item in order.order_items.all():
             print("-", item.quantity, "x", item.product.title)
         
         # Redirect to home page after 5 seconds
