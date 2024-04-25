@@ -1,0 +1,22 @@
+<!-- complete_order.html -->
+
+{% extends "base.html" %}
+{% block title %}Order Completed - Branded Perfumes{% endblock title %}
+{% block body %}
+<div class="container mt-4">
+    <h1 class="fw-medium">Order Completed</h1>
+    <p class="text-success">Your order has been completed successfully.</p>
+    <p>You will be redirected to the home page in <span id="countdown">5</span> seconds.</p>
+</div>
+
+<script>
+    var seconds = 5;
+    setInterval(function() {
+        seconds--;
+        document.getElementById("countdown").textContent = seconds;
+        if (seconds <= 0) {
+            window.location.href = "{% url 'shopall' %}";
+        }
+    }, 1000);
+</script>
+{% endblock body %}

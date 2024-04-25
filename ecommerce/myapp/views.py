@@ -1,5 +1,6 @@
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product
+from .models import Product, Order, OrderItem
 from django.http import JsonResponse
 
 # Create your views here.
@@ -38,16 +39,9 @@ def cart(request):
 
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
-    
-    # Get the cart from the session or initialize it as an empty list
     cart = request.session.get('cart', [])
-    
-    cart = request.session.get('cart', [])
-
     cart.append(product_id)
-
     request.session['cart'] = cart
-    
     return redirect('shopall')
 
 def update_cart_item(request, product_id):
@@ -96,5 +90,47 @@ def checkout(request):
     cart_count = sum(cart_items.values())
     return render(request, 'checkout.html', {'cart_items': cart_items, 'subtotal': subtotal, 'shipping_charge': shipping_charge, 'total': total, 'cart_count': cart_count})
 
+from django.contrib.auth.models import User
+
 def complete_order(request):
+    if request.method == 'POST':
+        # Process the order here
+        # You can access shipping address and payment method from the POST data
+        full_name = request.POST.get('full_name')
+        email = request.POST.get('email')
+        country = request.POST.get('country')
+        address = request.POST.get('address')
+        city = request.POST.get('city')
+        postal_code = request.POST.get('postal_code')
+        phone_number = request.POST.get('phone_number')
+        payment_method = request.POST.get('payment_method')
+        
+        # Create a temporary user
+        user, _ = User.objects.get_or_create(username='guest')
+        
+        # Create a new order
+        order = Order.objects.create(user=user, full_name=full_name, email=email, country=country, address=address, city=city, postal_code=postal_code, phone_number=phone_number, payment_method=payment_method)
+        
+        # Add items to the order
+        cart_items = get_cart_items(request)
+        for product, quantity in cart_items.items():
+            OrderItem.objects.create(order=order, product=product, quantity=quantity)
+        
+        # Clear the cart after completing the order
+        del request.session['cart']
+        
+        messages.success(request, 'Your order has been completed successfully.')
+        
+        # Debugging: print out order details
+        print("Order created successfully:")
+        print("Shipping Address:", address)
+        print("Payment Method:", payment_method)
+        print("Ordered Items:")
+        for item in OrderItem.objects.filter(order=order):
+            print("-", item.quantity, "x", item.product.title)
+        
+        # Redirect to home page after 5 seconds
+        return render(request, 'complete_order.html')
+
+    # If the request method is GET, render the complete_order page
     return render(request, 'complete_order.html')
