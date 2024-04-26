@@ -135,7 +135,7 @@ def complete_order(request):
         
         # Add items to the order
         for product, quantity in cart_items.items():
-            order.orderitem_set.create(product=product, quantity=quantity)
+            order.order_items.create(product=product, quantity=quantity)  # Change order.orderitem_set to order.order_items
         
         # Clear the cart after completing the order
         del request.session['cart']
@@ -147,7 +147,7 @@ def complete_order(request):
         print("Shipping Address:", address)
         print("Payment Method:", payment_method)
         print("Ordered Items:")
-        for item in order.orderitem_set.all():
+        for item in order.order_items.all():  # Change order.orderitem_set to order.order_items
             print("-", item.quantity, "x", item.product.title)
         
         # Redirect to home page after 5 seconds

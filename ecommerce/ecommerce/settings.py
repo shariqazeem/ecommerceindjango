@@ -28,9 +28,16 @@ SECRET_KEY = 'django-insecure-vmjq0&vkh1gdq1@$hq&s@qto)=r5&@s7t1)4v7e^&z)515uh-_
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://www.shariqshaukat.online','https://ecommerce.shariqshaukat.online','*']
+CSRF_TRUSTED_ORIGINS = ['https://www.shariqshaukat.online','https://ecommerce.shariqshaukat.online']
 
 
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'shariqshaukat786@gmail.com'
+EMAIL_HOST_PASSWORD = 'fkaednmfukelytgu'
 
 # Application definition
 
