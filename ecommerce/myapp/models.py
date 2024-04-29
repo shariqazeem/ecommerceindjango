@@ -1,6 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
 class Product(models.Model):
     title = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -9,9 +15,11 @@ class Product(models.Model):
     sold_out = models.BooleanField(default=False)
     featured = models.BooleanField(default=False)
     main_product = models.BooleanField(default=False)
-    
+    category = models.ForeignKey(Category, on_delete=models.SET_DEFAULT, default=1) # Set default category
+
     def __str__(self):
         return self.title
+
 
 class Order(models.Model):
     PAYMENT_METHOD_CHOICES = [

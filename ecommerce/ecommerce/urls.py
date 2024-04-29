@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='index'),
     path('collections/all', views.shopall, name='shopall'),
+    path('collections/<str:category_name>/', views.category, name='category'),
     path('product/<int:product_id>/', views.product_details, name='product_details'),
     path('cart/', views.cart, name='cart'),
     path('add_to_cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),

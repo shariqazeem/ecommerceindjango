@@ -1,37 +1,48 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Product, Order
+from .models import Product, Order,Category
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 
-# Create your views here.
-@csrf_exempt
+
 def index(request):
     featured_products = Product.objects.filter(featured=True)
     main_products = Product.objects.filter(main_product=True)
-
+    categories = Category.objects.all()  # Fetch all categories
     context = {
         'featured_products': featured_products,
-        'main_products': main_products
+        'main_products': main_products,
+        'categories': categories,  # Pass categories to the template
     }
     return render(request, 'index.html', context)
 
-@csrf_exempt
 def shopall(request):
     products = Product.objects.all()
+    categories = Category.objects.all()  # Fetch all categories
     context = {
-        'products': products
+        'products': products,
+        'categories': categories,  # Pass categories to the template
     }
     return render(request, 'shopall.html', context)
+
+def category(request, category_name):
+    category = Category.objects.get(name=category_name)
+    products = Product.objects.filter(category=category)
+    categories = Category.objects.all()
+    return render(request, 'category.html', {'category': category, 'products': products, 'categories': categories})
+
 
 @csrf_exempt
 def product_details(request, product_id):
     product = get_object_or_404(Product, id=product_id)
+    categories = Category.objects.all()  # Fetch all categories
     context = {
-        'product': product
+        'product': product,
+        'categories': categories,  # Pass categories to the template
     }
     return render(request, 'product_details.html', context)
+
 
 @csrf_exempt
 def cart(request):
