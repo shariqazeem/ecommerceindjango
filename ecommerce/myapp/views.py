@@ -4,25 +4,30 @@ from .models import Product, Order,Category
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
 
 
 def index(request):
     featured_products = Product.objects.filter(featured=True)
     main_products = Product.objects.filter(main_product=True)
     categories = Category.objects.all()  # Fetch all categories
+    cart_count = calculate_cart_count(request)  # Add this line to get the cart count
     context = {
         'featured_products': featured_products,
         'main_products': main_products,
         'categories': categories,  # Pass categories to the template
+        'cart_count': cart_count,  # Pass cart count to the template
     }
     return render(request, 'index.html', context)
 
 def shopall(request):
     products = Product.objects.all()
     categories = Category.objects.all()  # Fetch all categories
+    cart_count = calculate_cart_count(request)  # Add this line to get the cart count
     context = {
         'products': products,
         'categories': categories,  # Pass categories to the template
+        'cart_count': cart_count,  # Pass cart count to the template
     }
     return render(request, 'shopall.html', context)
 
@@ -30,27 +35,40 @@ def category(request, category_name):
     category = Category.objects.get(name=category_name)
     products = Product.objects.filter(category=category)
     categories = Category.objects.all()
-    return render(request, 'category.html', {'category': category, 'products': products, 'categories': categories})
+    cart_count = calculate_cart_count(request)  # Add this line to get the cart count
+    return render(request, 'category.html', {'category': category, 'products': products, 'categories': categories, 'cart_count': cart_count})
 
 
 @csrf_exempt
 def product_details(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     categories = Category.objects.all()  # Fetch all categories
+    cart_count = calculate_cart_count(request)  # Add this line to get the cart count
     context = {
         'product': product,
         'categories': categories,  # Pass categories to the template
+        'cart_count': cart_count,  # Pass cart count to the template
     }
     return render(request, 'product_details.html', context)
+
+
+def calculate_cart_count(request):
+    cart_product_ids = request.session.get('cart', [])
+    products_in_cart = Product.objects.filter(id__in=cart_product_ids)
+    cart_items = {product: cart_product_ids.count(product.id) for product in products_in_cart}
+    cart_count = sum(cart_items.values())
+    return cart_count
+
 
 
 @csrf_exempt
 def cart(request):
     cart_product_ids = request.session.get('cart', [])
     products_in_cart = Product.objects.filter(id__in=cart_product_ids)
+    categories = Category.objects.all()  # Fetch all categories
     cart_items = {product: cart_product_ids.count(product.id) for product in products_in_cart}
     cart_count = sum(cart_items.values())
-    context = {'cart_items': cart_items, 'cart_count': cart_count}
+    context = {'cart_items': cart_items, 'cart_count': cart_count,'categories':categories}
     return render(request, 'cart.html', context)
 
 @csrf_exempt
@@ -59,6 +77,12 @@ def add_to_cart(request, product_id):
     cart = request.session.get('cart', [])
     cart.append(product_id)
     request.session['cart'] = cart
+    
+    # Check if there is a 'next' parameter in the request, and if so, redirect to that page
+    next_page = request.GET.get('next')
+    if next_page:
+        return redirect(next_page)
+    
     return redirect('shopall')
 
 @csrf_exempt

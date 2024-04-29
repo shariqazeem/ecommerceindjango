@@ -12,10 +12,10 @@
         {% for product, quantity in cart_items.items %}
         <div class="list-group-item d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
-                <img src="{{product.image.url}}" alt="{{product.title}}" style="width: 80px;" class="mr-3">
+                <img src="{{product.image.url}}" alt="{{product.title}}" style="width: 80px;" class="me-3">
                 <div>
                     <h5 class="mb-0">{{product.title}}</h5>
-                    <p class="mb-0">{{product.price}}</p>
+                    <p class="mb-0">Price: Rs. {{product.price}}</p>
                     <p class="mb-0">Quantity: {{quantity}}</p>
                 </div>
             </div>
@@ -76,7 +76,7 @@
             </ul>
 
             <div class="d-flex justify-content-center mt-3">
-                <button id="checkout_button" type="submit" class="btn btn-primary">Complete Order</button>
+                <button id="checkout_button" type="submit" class="btn btn-primary btn-lg">Complete Order</button>
             </div>
         </form>
     </div>
@@ -96,7 +96,7 @@
     {% else %}
     <div class="text-center mt-4">
         <h3>Your cart is empty</h3>
-        <a href="{% url 'shopall' %}" class="btn btn-primary mt-3">Shop Now</a>
+        <a href="{% url 'shopall' %}" class="btn btn-primary btn-lg mt-3">Shop Now</a>
     </div>
     {% endif %}
 </div>

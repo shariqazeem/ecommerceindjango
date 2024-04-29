@@ -14,7 +14,7 @@
         <div class="col-lg-6">
             <h2 class="text-center">{{ product.title }}</h2>
             <p class="lead text-center  ">Price: Rs. {{ product.price }}</p>
-            <form class="d-flex justify-content-center align-items-center"  id="add-to-cart-form" data-product-id="{{ product.id }}" action="{% url 'add_to_cart' product.id %}">
+            <form class="d-flex justify-content-center align-items-center"  id="add-to-cart-form" data-product-id="{{ product.id }}" action="{% url 'add_to_cart' product.id %}?next={{ request.path }}" method='post'>
                 {% csrf_token %}
                 <button type="submit" id="add-to-cart-btn" class="btn btn-info " style="width: 100%;">Add to Cart</button>
             </form>
