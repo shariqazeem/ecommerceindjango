@@ -1,6 +1,22 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
+class Brand(models.Model):
+    name = models.CharField(max_length=100)
+    logo = models.ImageField(upload_to='brand_logos')
+
+    def __str__(self):
+        return self.name
+    
+class Caraousel(models.Model):
+    image = models.ImageField(upload_to='carousel_images')
+    brand_name = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.brand_name
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
 

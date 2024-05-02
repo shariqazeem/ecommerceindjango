@@ -20,18 +20,19 @@
     </div>
   </div>
 
-  <div id="carouselExample" class="carousel slide mb-4 " data-bs-ride="carousel">
+  <div id="carouselExample" class="carousel slide mb-4" data-bs-ride="carousel">
     <div class="carousel-inner">
       <div class="carousel-item active">
-        <img src="https://th.bing.com/th/id/R.1fb9d2bec5374074017fc964a676bda2?rik=SMtad7tuGMWf9Q&pid=ImgRaw&r=0" class="d-block w-100" alt="...">
-        <div class="carousel-content bg-body-tertiary p-5 rounded-5 ">
-          <h1 style="color: black;">Blissful</h1>
-          <p style="color: black;">More Than Skincare, It's a Lifestyle of Radiance</p>
+        <img src="{{ carousel_image }}" class="d-block w-100" alt="...">
+        <div class="carousel-content bg-body-tertiary p-5 rounded-5">
+          <h1 style="color: black;">{{ carousel_brand_name }}</h1>
+          <p style="color: black;">{{ carousel_description }}</p>
           <a href="{% url "shopall" %}" class="btn btn-primary">Shop Now</a>
         </div>
       </div>
     </div>
   </div>
+  
 
   <div class="carousel-rsp-content bg-body-tertiary p-5 rounded-bottom d-none text-center">
     <h1 style="color: black;">Blissful</h1>

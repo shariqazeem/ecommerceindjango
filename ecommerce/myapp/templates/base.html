@@ -27,9 +27,13 @@
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container">
-    <a class="navbar-brand" href="#">
-      <img class="img-fluid" src="{% static "images/logo.avif" %}" alt="logo">
-    </a>
+    <a class="navbar-brand" href="/">
+      {% if brand_logo %}
+          <img src="{{ brand_logo }}" alt="{{ brand_name }}"  height="90" class="d-inline-block align-top">
+      {% else %}
+          Brand Name
+      {% endif %}
+  </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
