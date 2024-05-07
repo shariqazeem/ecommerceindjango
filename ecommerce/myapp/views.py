@@ -1,4 +1,5 @@
 from django.contrib import messages
+import os
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Product, Order,Category,Brand
 from django.http import JsonResponse
@@ -13,8 +14,8 @@ from paypalrestsdk import Payment
 
 paypalrestsdk.configure({
     "mode": "sandbox",  # Change it to 'live' for production
-    "client_id": "AXEE48s4gBY-C4JR6IGj6VAN2Pv0Y1MQym2Uij5sG7PZaO5_KDWirG5uu4fsx3Uzd8d8Yq9w9UNGoJcF",
-    "client_secret": "ENp_zsOAUq8CH_0GWoYOSiSVTKr18uwv7kHH7uz-Yay1P2xbv-QCt-Mutb_BZ2m2PCiC_1KF6QyxuBnX"
+    "client_id": os.environ.get('PAYPAL_CLIENT_ID'),
+    "client_secret": os.environ.get('PAYPAL_CLIENT_SECRET')
 })
 
 def index(request):
