@@ -13,7 +13,7 @@ from django.core.mail import send_mail
 from decimal import Decimal
 
 paypalrestsdk.configure({
-    "mode": "sandbox",  # Change it to 'live' for production
+    "mode": "live",  # Change it to 'live' for production
     "client_id": os.environ.get('PAYPAL_CLIENT_ID'),
     "client_secret": os.environ.get('PAYPAL_CLIENT_SECRET')
 })
@@ -313,7 +313,7 @@ def paypal_redirect(request):
     client_id = settings.PAYPAL_CLIENT_ID
     client_secret = settings.PAYPAL_CLIENT_SECRET
     paypal_sdk_client = paypalrestsdk.Api({
-        "mode": "sandbox",  # Change it to 'live' for production
+        "mode": "live",  # Change it to 'live' for production
         "client_id": client_id,
         "client_secret": client_secret,
     })
@@ -343,7 +343,7 @@ def paypal_success(request):
     
     paypal_sdk_client = paypalrestsdk.Api(
         {
-            "mode": "sandbox",  # Change it to 'live' for production
+            "mode": "live",  # Change it to 'live' for production
             "client_id": settings.PAYPAL_CLIENT_ID,
             "client_secret": settings.PAYPAL_CLIENT_SECRET,
         }
