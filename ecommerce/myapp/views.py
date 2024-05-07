@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.urls import reverse
-import paypalhttp
 import paypalrestsdk
 from paypalrestsdk import Payment
 
