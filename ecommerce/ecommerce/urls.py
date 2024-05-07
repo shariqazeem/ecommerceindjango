@@ -32,7 +32,10 @@ urlpatterns = [
     path('remove_from_cart/<int:product_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('checkout/', views.checkout, name='checkout'),
     path('complete_order', views.complete_order, name='complete_order'),
-
+    path('paypal_payment/', views.paypal_payment, name='paypal_payment'),
+    path('paypal_redirect/', views.paypal_redirect, name='paypal_redirect'),
+    path('paypal/success/', views.paypal_success, name='paypal_success'),
+    path('paypal/cancel/', views.paypal_cancel, name='paypal_cancel'),
 
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

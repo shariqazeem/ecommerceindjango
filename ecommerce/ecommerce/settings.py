@@ -39,6 +39,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'shariqshaukat786@gmail.com'
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
+PAYPAL_CLIENT_SECRET = os.environ.get('PAYPAL_CLIENT_SECRET')
+
 # Application definition
 
 INSTALLED_APPS = [

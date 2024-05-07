@@ -6,6 +6,18 @@
 <div class="container mt-4">
     <h1 class="fw-medium">Order Completed</h1>
     <p class="text-success">Your order has been completed successfully.</p>
+    
+    <h2>Order Details</h2>
+    <p><strong>Order ID:</strong> {{ order.id }}</p>
+    <p><strong>Items Purchased:</strong></p>
+    <ul>
+        {% for item in order.order_items.all %}
+            <li>{{ item.product.name }} - Quantity: {{ item.quantity }}</li>
+        {% endfor %}
+    </ul>
+    <p><strong>Total Amount:</strong> ${{ order.total_bill }}</p>
+    <p><strong>Estimated Delivery Date:</strong> {{ order.delivery_date|date:"F j, Y" }}</p>
+    
     <p>You will be redirected to the home page in <span id="countdown">5</span> seconds.</p>
 </div>
 

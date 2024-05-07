@@ -4,8 +4,18 @@ from .models import Product, Order,Category,Brand
 from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 from django.urls import reverse
+import paypalhttp
+import paypalrestsdk
+from paypalrestsdk import Payment
 
+
+paypalrestsdk.configure({
+    "mode": "sandbox",  # Change it to 'live' for production
+    "client_id": "AXEE48s4gBY-C4JR6IGj6VAN2Pv0Y1MQym2Uij5sG7PZaO5_KDWirG5uu4fsx3Uzd8d8Yq9w9UNGoJcF",
+    "client_secret": "ENp_zsOAUq8CH_0GWoYOSiSVTKr18uwv7kHH7uz-Yay1P2xbv-QCt-Mutb_BZ2m2PCiC_1KF6QyxuBnX"
+})
 
 def index(request):
     featured_products = Product.objects.filter(featured=True)
@@ -118,7 +128,6 @@ def get_cart_items(request):
     return cart_items
 
 
-@csrf_exempt
 def checkout(request):
     if request.method == 'POST':
         cart_items = get_cart_items(request)
@@ -132,7 +141,40 @@ def checkout(request):
         total = subtotal + shipping_charge
 
         cart_count = sum(cart_items.values())
-        return render(request, 'checkout.html', {'cart_items': cart_items, 'subtotal': subtotal, 'shipping_charge': shipping_charge, 'total': total, 'cart_count': cart_count})
+
+        payment_method = request.POST.get('payment_method')
+        if payment_method == 'paypro':
+            return render(request, 'paypal_payment.html', {'total': total})
+        else:
+            if payment_method:
+                user, _ = User.objects.get_or_create(username='guest')
+                order = Order.objects.create(
+                    user=user,
+                    full_name=request.POST.get('full_name'),
+                    email=request.POST.get('email'),
+                    country=request.POST.get('country'),
+                    address=request.POST.get('address'),
+                    city=request.POST.get('city'),
+                    postal_code=request.POST.get('postal_code'),
+                    phone_number=request.POST.get('phone_number'),
+                    payment_method=payment_method,
+                    total_bill=total
+                )
+                
+                for product, quantity in cart_items.items():
+                    order.order_items.create(product=product, quantity=quantity)
+                
+                del request.session['cart']
+                
+                if payment_method == 'paypro':
+                    request.session['order_id'] = order.id
+                    return redirect('paypal_payment')
+                else:
+                    messages.success(request, 'Your order has been completed successfully.')
+                    return redirect('home')
+            else:
+                messages.error(request, 'Please select a payment method.')
+                return redirect('checkout')
 
     cart_items = get_cart_items(request)
     subtotal = sum(product.price * quantity for product, quantity in cart_items.items())
@@ -142,11 +184,100 @@ def checkout(request):
     cart_count = sum(cart_items.values())
     return render(request, 'checkout.html', {'cart_items': cart_items, 'subtotal': subtotal, 'shipping_charge': shipping_charge, 'total': total, 'cart_count': cart_count})
 
+
+
+def paypal_payment(request):
+    order_id = request.session.get('order_id')
+    order = Order.objects.get(id=order_id)
+    cart_items = order.order_items.all()
+    subtotal = sum(item.product.price * item.quantity for item in cart_items)
+    shipping_charge = 200
+    total_bill = subtotal + shipping_charge
+
+    paypal_order = {
+        "intent": "sale",
+        "payer": {
+            "payment_method": "paypal",
+        },
+        "redirect_urls": {
+            "return_url": request.build_absolute_uri(reverse("paypal_success")),
+            "cancel_url": request.build_absolute_uri(reverse("paypal_cancel")),
+        },
+        "transactions": [{
+            "amount": {
+                "total": str(total_bill),
+                "currency": "USD"
+            },
+            "description": "Payment for order #" + str(order_id)
+        }]
+    }
+
+    request.session['paypal_order'] = paypal_order
+    return redirect('paypal_redirect')
+
+def paypal_redirect(request):
+    client_id = settings.PAYPAL_CLIENT_ID
+    client_secret = settings.PAYPAL_CLIENT_SECRET
+    paypal_sdk_client = paypalrestsdk.Api({
+        "mode": "sandbox",  # Change it to 'live' for production
+        "client_id": client_id,
+        "client_secret": client_secret,
+    })
+
+    paypal_order = request.session['paypal_order']
+    paypal_order["redirect_urls"] = {
+        "return_url": request.build_absolute_uri(reverse("paypal_success")),
+        "cancel_url": request.build_absolute_uri(reverse("paypal_cancel")),
+    }
+
+    payment = paypalrestsdk.Payment(paypal_order)
+    if payment.create():
+        for link in payment.links:
+            if link.rel == 'approval_url':
+                redirect_url = str(link.href)
+                return redirect(redirect_url)
+    else:
+        messages.error(request, 'Payment processing failed. Please try again later.')
+        return redirect('checkout')
+
+
+def paypal_success(request):
+    payer_id = request.GET.get('PayerID')
+    order_id = request.session.get('order_id')
+    
+    paypal_sdk_client = paypalrestsdk.Api(
+        {
+            "mode": "sandbox",  # Change it to 'live' for production
+            "client_id": settings.PAYPAL_CLIENT_ID,
+            "client_secret": settings.PAYPAL_CLIENT_SECRET,
+        }
+    )
+    
+    # Capture the payment status
+    payment = paypalrestsdk.Payment.find(request.GET['paymentId'])
+    if payment.execute({"payer_id": payer_id}):
+        order = Order.objects.get(id=order_id)
+        order.payment_status = "Paid"
+        order.save()
+        del request.session['order_id']
+        del request.session['paypal_order']
+        messages.success(request, 'Payment processed successfully.')
+        return render(request, 'complete_order.html', {'order': order})
+    else:
+        messages.error(request, 'Payment processing failed. Please try again later.')
+        return redirect('checkout')
+
+
+def paypal_cancel(request):
+    messages.error(request, 'Payment was cancelled.')
+    return redirect('index')
+
+
+
+
 @csrf_exempt
 def complete_order(request):
     if request.method == 'POST':
-        # Process the order here
-        # You can access shipping address and payment method from the POST data
         full_name = request.POST.get('full_name')
         email = request.POST.get('email')
         country = request.POST.get('country')
@@ -156,37 +287,28 @@ def complete_order(request):
         phone_number = request.POST.get('phone_number')
         payment_method = request.POST.get('payment_method')
         
-        # Calculate the total bill
         cart_items = get_cart_items(request)
         subtotal = sum(product.price * quantity for product, quantity in cart_items.items())
         shipping_charge = 200
         total_bill = subtotal + shipping_charge
         
-        # Create a temporary user
         user, _ = User.objects.get_or_create(username='guest')
-        
-        # Create a new order
         order = Order.objects.create(user=user, full_name=full_name, email=email, country=country, address=address, city=city, postal_code=postal_code, phone_number=phone_number, payment_method=payment_method, total_bill=total_bill)
         
-        # Add items to the order
         for product, quantity in cart_items.items():
-            order.order_items.create(product=product, quantity=quantity)  # Change order.orderitem_set to order.order_items
+            order.order_items.create(product=product, quantity=quantity)
         
-        # Clear the cart after completing the order
         del request.session['cart']
         
-        messages.success(request, 'Your order has been completed successfully.')
-        
-        # Debugging: print out order details
-        print("Order created successfully:")
-        print("Shipping Address:", address)
-        print("Payment Method:", payment_method)
-        print("Ordered Items:")
-        for item in order.order_items.all():  # Change order.orderitem_set to order.order_items
-            print("-", item.quantity, "x", item.product.title)
-        
-        # Redirect to home page after 5 seconds
-        return render(request, 'complete_order.html')
+        if payment_method == 'paypro':
+            request.session['order_id'] = order.id
+            return redirect('paypal_payment')
+        else:
+            messages.success(request, 'Your order has been completed successfully.')
+        return render(request, 'complete_order.html', {'order': order})
 
-    # If the request method is GET, render the complete_order page
     return render(request, 'complete_order.html')
+
+
+
+
