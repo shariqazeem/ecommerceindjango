@@ -9,13 +9,112 @@ from django.conf import settings
 from django.urls import reverse
 import paypalrestsdk
 from paypalrestsdk import Payment
-
+from django.core.mail import send_mail
+from decimal import Decimal
 
 paypalrestsdk.configure({
     "mode": "sandbox",  # Change it to 'live' for production
     "client_id": os.environ.get('PAYPAL_CLIENT_ID'),
     "client_secret": os.environ.get('PAYPAL_CLIENT_SECRET')
 })
+
+def send_store_notification(order):
+    subject = 'New Order Received'
+    order_items = order.order_items.all()  # Use the related name specified in the OrderItem model
+    products = [f"{item.product.title} (Quantity: {item.quantity})" for item in order_items]
+    total_bill = order.total_bill
+
+    message = f'''
+    Hi,
+
+    You have received a new order:
+
+    Order ID: {order.id}
+    Products: {", ".join(products)}
+    Amount: {total_bill}
+    Shipping Address: {order.address}, {order.city}, {order.country}, {order.postal_code}
+    Payment Method: {order.get_payment_method_display()}
+    Phone Number: {order.phone_number}
+
+    Regards,
+    Shariq Traders
+    '''
+    from_email = 'shariqshaukat786@gmail.com'
+    to_email = [from_email]  # Send email to the store owner
+
+    send_mail(subject, message, from_email, to_email)
+
+def send_customer_notification(order):
+    subject = 'Thank You for Your Order'
+    order_items = order.order_items.all()
+    total_bill = order.total_bill
+
+    # Constructing HTML email message using Django template syntax
+    message = '''
+    <html>
+        <head>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                }}
+                .container {{
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    padding: 20px;
+                }}
+                .header {{
+                    background-color: #f4f4f4;
+                    border-bottom: 1px solid #ddd;
+                    padding: 10px;
+                    text-align: center;
+                }}
+                .order-details {{
+                    margin-top: 20px;
+                }}
+                .thank-you {{
+                    margin-top: 20px;
+                    text-align: center;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>Thank You for Your Order!</h2>
+                </div>
+                <div class="order-details">
+                    <p>Hi {full_name},</p>
+                    <p>We have received your order with the following details:</p>
+                    <p><strong>Order ID:</strong> {order_id}</p>
+                    <p><strong>Products:</strong></p>
+                    <ul>
+                        {items}
+                    </ul>
+                    <p><strong>Total Amount:</strong> PKR{total_bill}</p>
+                    <p><strong>Payment Method:</strong> {payment_method}</p>
+                </div>
+                <div class="thank-you">
+                    <p>We will update you soon with the status of your order.</p>
+                    <p>Regards,<br>Shariq Traders</p>
+                </div>
+            </div>
+        </body>
+    </html>
+    '''.format(
+        full_name=order.full_name,
+        order_id=order.id,
+        items=''.join(f'<li>{item.product.title} (Quantity: {item.quantity})</li>' for item in order_items),
+        total_bill=total_bill,
+        payment_method=order.get_payment_method_display()
+    )
+
+    from_email = 'shariqshaukat786@gmail.com'
+    to_email = [order.email]
+
+    send_mail(subject, '', from_email, to_email, html_message=message)
+
+
 
 def index(request):
     featured_products = Product.objects.filter(featured=True)
@@ -140,41 +239,37 @@ def checkout(request):
         shipping_charge = 200
         total = subtotal + shipping_charge
 
-        cart_count = sum(cart_items.values())
-
         payment_method = request.POST.get('payment_method')
-        if payment_method == 'paypro':
-            return render(request, 'paypal_payment.html', {'total': total})
-        else:
-            if payment_method:
-                user, _ = User.objects.get_or_create(username='guest')
-                order = Order.objects.create(
-                    user=user,
-                    full_name=request.POST.get('full_name'),
-                    email=request.POST.get('email'),
-                    country=request.POST.get('country'),
-                    address=request.POST.get('address'),
-                    city=request.POST.get('city'),
-                    postal_code=request.POST.get('postal_code'),
-                    phone_number=request.POST.get('phone_number'),
-                    payment_method=payment_method,
-                    total_bill=total
-                )
-                
-                for product, quantity in cart_items.items():
-                    order.order_items.create(product=product, quantity=quantity)
-                
-                del request.session['cart']
-                
-                if payment_method == 'paypro':
-                    request.session['order_id'] = order.id
-                    return redirect('paypal_payment')
-                else:
-                    messages.success(request, 'Your order has been completed successfully.')
-                    return redirect('home')
+        if payment_method:
+            user, _ = User.objects.get_or_create(username='guest')
+            order = Order.objects.create(
+                user=user,
+                full_name=request.POST.get('full_name'),
+                email=request.POST.get('email'),
+                country=request.POST.get('country'),
+                address=request.POST.get('address'),
+                city=request.POST.get('city'),
+                postal_code=request.POST.get('postal_code'),
+                phone_number=request.POST.get('phone_number'),
+                payment_method=payment_method,
+                total_bill=total
+            )
+            
+            for product, quantity in cart_items.items():
+                order.order_items.create(product=product, quantity=quantity)
+            
+            del request.session['cart']
+            
+            if payment_method == 'paypro':
+                request.session['order_id'] = order.id  # Set order_id in session
+                return redirect('paypal_payment')
             else:
-                messages.error(request, 'Please select a payment method.')
-                return redirect('checkout')
+                request.session['order_id'] = order.id  # Set order_id in session
+                messages.success(request, 'Your order has been completed successfully.')
+                return redirect('complete_order')
+        else:
+            messages.error(request, 'Please select a payment method.')
+            return redirect('checkout')
 
     cart_items = get_cart_items(request)
     subtotal = sum(product.price * quantity for product, quantity in cart_items.items())
@@ -183,7 +278,6 @@ def checkout(request):
 
     cart_count = sum(cart_items.values())
     return render(request, 'checkout.html', {'cart_items': cart_items, 'subtotal': subtotal, 'shipping_charge': shipping_charge, 'total': total, 'cart_count': cart_count})
-
 
 
 def paypal_payment(request):
@@ -241,6 +335,8 @@ def paypal_redirect(request):
         return redirect('checkout')
 
 
+
+@csrf_exempt
 def paypal_success(request):
     payer_id = request.GET.get('PayerID')
     order_id = request.session.get('order_id')
@@ -261,6 +357,12 @@ def paypal_success(request):
         order.save()
         del request.session['order_id']
         del request.session['paypal_order']
+        
+        # Send email to the store owner
+        send_store_notification(order)
+        # Send email to the customer
+        send_customer_notification(order)
+        
         messages.success(request, 'Payment processed successfully.')
         return render(request, 'complete_order.html', {'order': order})
     else:
@@ -268,12 +370,10 @@ def paypal_success(request):
         return redirect('checkout')
 
 
+
 def paypal_cancel(request):
     messages.error(request, 'Payment was cancelled.')
     return redirect('index')
-
-
-
 
 @csrf_exempt
 def complete_order(request):
@@ -293,22 +393,46 @@ def complete_order(request):
         total_bill = subtotal + shipping_charge
         
         user, _ = User.objects.get_or_create(username='guest')
-        order = Order.objects.create(user=user, full_name=full_name, email=email, country=country, address=address, city=city, postal_code=postal_code, phone_number=phone_number, payment_method=payment_method, total_bill=total_bill)
+        order = Order.objects.create(
+            user=user, 
+            full_name=full_name, 
+            email=email, 
+            country=country, 
+            address=address, 
+            city=city, 
+            postal_code=postal_code, 
+            phone_number=phone_number, 
+            payment_method=payment_method, 
+            total_bill=float(total_bill)
+        )
         
         for product, quantity in cart_items.items():
             order.order_items.create(product=product, quantity=quantity)
         
         del request.session['cart']
-        
+
         if payment_method == 'paypro':
             request.session['order_id'] = order.id
+
+            # PayPal payment process
+            request.session['payment_method'] = payment_method
+            request.session['full_name'] = full_name
+            request.session['email'] = email
+            request.session['country'] = country
+            request.session['address'] = address
+            request.session['city'] = city
+            request.session['postal_code'] = postal_code
+            request.session['phone_number'] = phone_number
+            request.session['total_bill'] = float(total_bill)
+            
             return redirect('paypal_payment')
         else:
+            # Cash on Delivery
             messages.success(request, 'Your order has been completed successfully.')
-        return render(request, 'complete_order.html', {'order': order})
+            # Send email to the store owner
+            send_store_notification(order)
+            # Send email to the customer
+            send_customer_notification(order)
+            return render(request, 'complete_order.html', {'order': order})
 
     return render(request, 'complete_order.html')
-
-
-
-
